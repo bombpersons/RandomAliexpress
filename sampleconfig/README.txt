@@ -1,0 +1,2 @@
+These are sample configurations which should not list user-specific data such as api-keys, which should not be pushed to the repository.
+Currently I figure files containing such data should be located in a 'config' directory, which will be added to gitignore.
