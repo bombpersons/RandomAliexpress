@@ -1,7 +1,7 @@
 var require = patchRequire(require);
 
 // Get's a random product from a page of items.
-exports.findproduct = function(search, currency, lowbudget, highbudget) {
+exports.findproduct = function(search, currency, lowbudget, highbudget, maxRetries) {
   var totalResultCount = 0;
   var itemsPerPageCount = 0;
   var totalPages = 0;
@@ -130,10 +130,15 @@ exports.findproduct = function(search, currency, lowbudget, highbudget) {
       };
     }
 
+    var pickedItem = null;
+
     // If there are any results..
     if (totalResultCount > 0) {
-      var item = {};
+
+      var retries = 0;
       while (true) {
+        console.log('Item selection attempt ' + retries);
+
         // Generate a random page that is in range.
         if (totalPages > 1) {
           randomPage = Math.floor(Math.random() * totalPages);
@@ -141,21 +146,35 @@ exports.findproduct = function(search, currency, lowbudget, highbudget) {
           this.sendKeys('input#pagination-bottom-input', randomPage.toString(), {reset: true});
           this.click('input#pagination-bottom-goto');
 
-          this.capture(randomPage + '.png');
+          this.capture('output/pagecapture-' + search + '-' + randomPage + '.png');
           console.log("waited.");
         }
 
-        item = this.evaluate(pickItem);
+        var item = this.evaluate(pickItem);
+
         if (item.price >= lowbudget && item.price <= highbudget) {
+          pickedItem = item
+          console.log("Found item!");
           break;
         } else {
           console.log('Rejected: ' + item.URL + ' at total price of  ' + item.price);
+          ++retries;
+          if(retries > maxRetries)
+          {
+            console.log("Hit max retries (" + maxRetries + ")");
+            break;
+          }
         }
       }
+    }
 
-      console.log('Picked: ' + item.name + ' at total price of ' + item.price);
-      console.log(item.name);
-    } else {
+    if(pickedItem)
+    {
+      console.log('Picked: ' + pickedItem.name + ' at total price of ' + pickedItem.price);
+      console.log(pickedItem.name);
+    }
+    else
+    {
       // No results.
       console.log("Couldn't find anything!");
     }
